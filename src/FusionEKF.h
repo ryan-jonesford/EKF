@@ -9,6 +9,8 @@
 #include "kalman_filter.h"
 #include "tools.h"
 
+static const int MAX_DT = 120; // 2min
+
 class FusionEKF {
 public:
   /**
@@ -43,7 +45,9 @@ private:
   Eigen::MatrixXd R_laser_;
   Eigen::MatrixXd R_radar_;
   Eigen::MatrixXd H_laser_;
-  Eigen::MatrixXd Hj_;
+
+  // Process and measurement noise
+  int noise_ax_, noise_ay_;
 };
 
 #endif /* FusionEKF_H_ */

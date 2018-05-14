@@ -1,6 +1,7 @@
 #ifndef TOOLS_H_
 #define TOOLS_H_
 #include <vector>
+#include <cmath>
 #include "Eigen/Dense"
 
 using Eigen::MatrixXd;
@@ -28,6 +29,16 @@ public:
   * A helper method to calculate Jacobians.
   */
   MatrixXd CalculateJacobian(const VectorXd& x_state);
+
+  /**
+  * A helper method to convert Polar coords to cartesian.
+  */
+  VectorXd PolarToCartesian(const VectorXd& polar);
+
+  /**
+  * A helper method to convert cartesian coords to Polar.
+  */
+  VectorXd CartesianToPolar(const VectorXd& cartesian);
 
 };
 
