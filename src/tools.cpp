@@ -26,13 +26,14 @@ Tools::~Tools() {}
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
   
- 	int vector_size = estimations[0].size();
-	VectorXd rmse = VectorXd::Zero(vector_size);
+    unsigned int vector_size = estimations.size();
+ 	unsigned int vectorXd_size = estimations[0].size();
+	VectorXd rmse = VectorXd::Zero(vectorXd_size);
 
 	// the estimation vector size should not be zero
 	// the estimation vector size should equal ground truth vector size
-	if( !estimations.size() ||
-		estimations.size() != ground_truth.size())
+	if( !vector_size ||
+		vector_size != ground_truth.size())
  	{
 		cout << "Tools::CalculateRMSE: Invalid estimation "
 				"or ground_truth Vector" << endl;
@@ -40,17 +41,16 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
 	}
 
 	//accumulate squared residuals
-	VectorXd residuals = VectorXd::Zero(vector_size);
-	VectorXd resid(vector_size);
-	for(int i=0; i < estimations.size(); ++i)
- 	{
+	VectorXd residuals = VectorXd::Zero(vectorXd_size);
+	VectorXd resid(vectorXd_size);
+	for(unsigned int i=0; i < vector_size; ++i){
 		resid = (estimations[i] - ground_truth[i]);
-		resid = resid.array()*resid.array();
-		residuals += resid;
+	    resid = resid.array()*resid.array();
+        residuals += resid;
 	}
 
 	//calculate the mean
-	rmse = residuals.array()/vector_size;
+	rmse = residuals/vector_size;
 
 	//calculate the squared root
 	rmse = rmse.array().sqrt();
@@ -68,12 +68,12 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
 
 	MatrixXd Hj = MatrixXd::Zero(3,4);
 	//recover state parameters
-	float px = x_state(0);
-	float py = x_state(1);
-	float vx = x_state(2);
-	float vy = x_state(3);
-	float px2py2 = px*px+py*py;
-	float px2py2_sqrt = sqrt(px2py2);
+	double px = x_state(0);
+	double py = x_state(1);
+	double vx = x_state(2);
+	double vy = x_state(3);
+	double px2py2 = px*px+py*py;
+	double px2py2_sqrt = sqrt(px2py2);
 
 	//check division by (or close to) zero
 	if( fabs(px2py2) < 0.0001 )
@@ -101,23 +101,13 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
  * Description: Convert Polar coords to cartesian
 **/
 VectorXd Tools::PolarToCartesian(const VectorXd& polar){
-	float rho = polar(0);
-	float phi = polar(1);
+	double rho = polar(0);
 	// normalize angle between -pi and pi
-	while (phi < -M_PI){
-		phi += 2 * M_PI;
-	}
-	while ( phi > M_PI ){
-		phi -= 2 * M_PI;
-	}
-	if( fabs(phi) > M_PI )
-	{
-		cout << "Tools::PolarToCartesian: Phi outside of -pi to pi: "
-			 << phi << "\nBailing out." << endl;
-		exit(1);
-	}
-	float px = cos(phi) + rho;
-	float py = sin(phi) + rho;
+	double phi = polar(1);
+	// double phi = polar(1);
+	
+	double px = cos(phi) + rho;
+	double py = sin(phi) + rho;
     VectorXd cartesian = VectorXd(4);
 	cartesian(0) = px;
 	cartesian(1) = py;
@@ -131,35 +121,23 @@ VectorXd Tools::PolarToCartesian(const VectorXd& polar){
 **/
 VectorXd Tools::CartesianToPolar(const VectorXd& cartesian){
 	// grab the cartesian coords
-	float px = cartesian(0);
-	float py = cartesian(1);
-	float vx = cartesian(2);
-	float vy = cartesian(3);
+	double px = cartesian(0);
+	double py = cartesian(1);
+	double vx = cartesian(2);
+	double vy = cartesian(3);
 
 	// setup to convert to polar
-	float px2py2 = px*px+py*py;
+	double px2py2 = px*px+py*py;
 	//check division by (or close to) zero
 	if( fabs(px2py2) < 0.0001 )
   	{
 		cout << "Tools::CalculateJacobian: Division by Zero detected!! Bailing out." << endl;
 		exit(1);
 	}
-	float sqrt_px2_py2 = sqrt(px2py2);
-	float atan__py_div_px = atan2(py,px);
+	double sqrt_px2_py2 = sqrt(px2py2);
 
 	// normalize angle between -pi and pi
-	while (atan__py_div_px < -M_PI){
-		atan__py_div_px += 2 * M_PI;
-	}
-	while ( atan__py_div_px > M_PI ){
-		atan__py_div_px -= 2 * M_PI;
-	}
-	if( fabs(atan__py_div_px) > M_PI )
-	{
-		cout << "Tools::CalculateJacobian: Phi outside of -pi to pi: "
-			 << atan__py_div_px << "\nBailing out." << endl;
-		exit(1);
-	}
+	double atan__py_div_px = atan2(py,px);
 	
 	// populate the polar vector and return
 	VectorXd polar = VectorXd(3);
@@ -168,4 +146,20 @@ VectorXd Tools::CartesianToPolar(const VectorXd& cartesian){
 				( px*vx + py*vy ) / sqrt_px2_py2;
 
 	return polar;
+}
+
+double Tools::normalizePhi(double phi){
+	while (phi < -M_PI){
+		phi += 2 * M_PI;
+	}
+	while ( phi > M_PI ){
+		phi -= 2 * M_PI;
+	}
+	if( fabs(phi) > M_PI )
+	{
+		cout << "Tools::normalizePhi: phi outside of -pi to pi: "
+			 << phi << "\nBailing out." << endl;
+		exit(1);
+	}
+	return phi;
 }

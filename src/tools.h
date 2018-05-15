@@ -40,6 +40,11 @@ public:
   */
   VectorXd CartesianToPolar(const VectorXd& cartesian);
 
+  /**
+  * A helper method to normalize an angle between -Pi and Pi
+  */
+  double normalizePhi(double phi);
+
 };
 
 #endif /* TOOLS_H_ */

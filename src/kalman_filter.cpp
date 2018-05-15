@@ -38,7 +38,7 @@ void KalmanFilter::Predict() {
 **/
 void KalmanFilter::Update(const VectorXd &z) {
   
-  VectorXd z_pred = H_ * x_;
+  	VectorXd z_pred = H_ * x_;
 	VectorXd y      = z - z_pred;
 	MatrixXd Ht     = H_.transpose();
 	MatrixXd S      = H_ * P_ * Ht + R_;
@@ -58,22 +58,13 @@ void KalmanFilter::Update(const VectorXd &z) {
  * Description: Updates the state by using Extended Kalman Filter equations
 **/
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
-  MatrixXd y  = z - tools.CartesianToPolar(x_);
-  while (y(1) < -M_PI){
-		y(1) += 2 * M_PI;
-	}
-	while ( y(1) > M_PI ){
-		y(1) -= 2 * M_PI;
-	}
-	if( fabs(y(1)) > M_PI )
-	{
-		cout << "Tools::PolarToCartesian: y(1) outside of -pi to pi: "
-			 << y(1) << "\nBailing out." << endl;
-		exit(1);
-	}
+	VectorXd z_pred = tools.CartesianToPolar(x_);;
+  	MatrixXd y  	= z - z_pred;
+	y(1) = tools.normalizePhi(y(1));
 	MatrixXd Ht = H_.transpose();
-  MatrixXd S  = H_ * P_ * Ht + R_;
-  MatrixXd K  = P_ * Ht * S.inverse();
+  	MatrixXd S  = H_ * P_ * Ht + R_;
+	MatrixXd PHt    = P_ * Ht;
+	MatrixXd K      = PHt * S.inverse();
 
 	//new estimate
 	x_ = x_ + (K * y);

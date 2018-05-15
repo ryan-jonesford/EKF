@@ -80,8 +80,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
         ekf_.x_(0) =  px_py(0);
         ekf_.x_(1) =  px_py(1);
 
-        ekf_.P_ <<  100, 0, 0, 0,
-                    0, 100, 0, 0,
+        ekf_.P_ <<  10, 0, 0, 0,
+                    0, 10, 0, 0,
                     0, 0, 100, 0,
                     0, 0, 0, 100;
         break;
@@ -90,10 +90,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       {
         ekf_.x_(0) = measurement_pack.raw_measurements_(0);
         ekf_.x_(1) = measurement_pack.raw_measurements_(1);
-        ekf_.P_ <<  100, 0, 0, 0,
-                    0, 100, 0, 0,
-                    0, 0, 100, 0,
-                    0, 0, 0, 100;
+        ekf_.P_ <<  1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1000, 0,
+                    0, 0, 0, 1000;
         break; 
       }
       default:
