@@ -24,3 +24,5 @@ ide_profiles/xcode/Debug/
 ide_profiles/xcode/ExtendedKF.build/
 install-ubuntu.sh
 data/obj_pose-laser-radar-synthetic-input.txt
+install-ubuntu.sh
+data/obj_pose-laser-radar-synthetic-input.txt
