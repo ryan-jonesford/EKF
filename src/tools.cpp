@@ -102,13 +102,10 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
 **/
 VectorXd Tools::PolarToCartesian(const VectorXd& polar){
 	double rho = polar(0);
-	// normalize angle between -pi and pi
 	double phi = polar(1);
-	// double phi = polar(1);
-	
 	double px = cos(phi) + rho;
 	double py = sin(phi) + rho;
-    VectorXd cartesian = VectorXd(4);
+    VectorXd cartesian = VectorXd(2);
 	cartesian(0) = px;
 	cartesian(1) = py;
 	return cartesian;

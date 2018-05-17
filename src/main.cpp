@@ -4,6 +4,7 @@
 #include <math.h>
 #include "FusionEKF.h"
 #include "tools.h"
+#include <fstream>
 
 using namespace std;
 
@@ -26,9 +27,20 @@ std::string hasData(std::string s) {
   return "";
 }
 
-int main()
+int main(int argc, char* argv[])
 {
   uWS::Hub h;
+
+  // Create an output file
+  bool logging = false;
+  bool write_header = false;
+  if ( argc > 1 ){
+    if( !strcmp(argv[1],"-f"))
+    {
+      logging = true;
+      write_header=true;
+    }
+  }
 
   // Create a Kalman Filter instance
   FusionEKF fusionEKF;
@@ -37,18 +49,34 @@ int main()
   Tools tools;
   vector<VectorXd> estimations;
   vector<VectorXd> ground_truth;
-
-  h.onMessage([&fusionEKF,&tools,&estimations,&ground_truth](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&fusionEKF,&tools,&estimations,&ground_truth,&logging,&write_header](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
+
+    fstream fs;
 
     if (length && length > 2 && data[0] == '4' && data[1] == '2')
     {
 
       auto s = hasData(std::string(data));
-      if (s != "") 
+      if ( s != "" ) 
       {
+
+        if( logging )
+        {
+          if( write_header )
+          {
+            fs.open("out_log.csv", fstream::in | fstream::app);
+            fs << "timestamp,px,py,rho,phi,rho_dot,est_px,est_py,est_vx,est_vy,gt_px,"
+                  "gt_py,gt_vx,gt_vy,rsme(px),rsme(py),rsme(vx),rsme(vy)\n";
+            write_header = false;
+          }
+          else
+          {
+            fs.open("out_log.csv", fstream::in | fstream::app);
+          }
+        }
       	
         auto j = json::parse(s);
 
@@ -67,7 +95,6 @@ int main()
           // reads first element from the current line
           string sensor_type;
           iss >> sensor_type;
-
           if (sensor_type.compare("L") == 0) 
           {
             meas_package.sensor_type_ = MeasurementPackage::LASER;
@@ -79,6 +106,10 @@ int main()
             meas_package.raw_measurements_ << px, py;
             iss >> timestamp;
             meas_package.timestamp_ = timestamp;
+            if( logging )
+            {  
+              fs << timestamp<<","<<px<<","<<py<<",,,,";
+            }
           } 
           else if (sensor_type.compare("R") == 0) 
           {
@@ -93,6 +124,10 @@ int main()
             meas_package.raw_measurements_ << ro,theta, ro_dot;
             iss >> timestamp;
             meas_package.timestamp_ = timestamp;
+            if(logging)
+            {
+              fs <<timestamp<<","<< ",,"<<ro<<","<<theta<<","<<ro_dot<<",";
+            }
           }
           float x_gt;
           float y_gt;
@@ -108,6 +143,7 @@ int main()
           gt_values(2) = vx_gt;
           gt_values(3) = vy_gt;
           ground_truth.push_back(gt_values);
+          
             
           //Call ProcessMeasurment(meas_package) for Kalman filter
           fusionEKF.ProcessMeasurement(meas_package);    	  
@@ -141,6 +177,13 @@ int main()
           // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 	  
+          if( logging )
+          {
+            fs  <<p_x<<","<<p_y<<","<<v1<<","<<v2<<","
+                <<x_gt<<","<<y_gt<<","<<vx_gt<<","<<vy_gt<<","
+                <<RMSE(0)<<","<<RMSE(1)<<","<<RMSE(2)<<","<<RMSE(3)<<"\n";
+            fs.close();
+          } 
         }
       } 
       else 
@@ -149,7 +192,6 @@ int main()
         ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
       }
     }
-
   });
 
   // We don't need this since we're not using HTTP but if it's removed the program

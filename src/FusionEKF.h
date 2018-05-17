@@ -48,6 +48,11 @@ private:
 
   // Process and measurement noise
   int noise_ax_, noise_ay_;
+
+  /**
+  * Get the time step and check for out of bounds before returning
+  */
+  double get_dt(const MeasurementPackage &measurement_pack);
 };
 
 #endif /* FusionEKF_H_ */

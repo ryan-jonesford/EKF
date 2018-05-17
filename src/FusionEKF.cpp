@@ -42,7 +42,6 @@ FusionEKF::FusionEKF() {
               0, 0, 0, 1;
   ekf_.P_ = MatrixXd::Zero(4,4);
   ekf_.Q_ = MatrixXd::Zero(4,4);
-
 }
 
 /**
@@ -50,24 +49,21 @@ FusionEKF::FusionEKF() {
 */
 FusionEKF::~FusionEKF() {}
 
-
 /**
  * Name: ProcessMeasurement
  * Return: None
  * Description: Updates the state predictions from measurements
 **/
 void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
-
-
+  
   /*****************************************************************************
    *  Initialization
    ****************************************************************************/
-  if (!is_initialized_) {
+  if ( !is_initialized_ ) 
+  {
 
     // first measurement
-    ekf_.x_ = VectorXd(4);
-    ekf_.x_ << 1, 1, 1, 1;
-
+    ekf_.x_ = VectorXd::Ones(4);
     // set timestamp
     previous_timestamp_ = measurement_pack.timestamp_;
     
@@ -79,27 +75,22 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
         VectorXd px_py = tools.PolarToCartesian(measurement_pack.raw_measurements_);
         ekf_.x_(0) =  px_py(0);
         ekf_.x_(1) =  px_py(1);
-
-        ekf_.P_ <<  10, 0, 0, 0,
-                    0, 10, 0, 0,
-                    0, 0, 100, 0,
-                    0, 0, 0, 100;
         break;
       }
       case (MeasurementPackage::LASER):
       {
         ekf_.x_(0) = measurement_pack.raw_measurements_(0);
         ekf_.x_(1) = measurement_pack.raw_measurements_(1);
-        ekf_.P_ <<  1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1000, 0,
-                    0, 0, 0, 1000;
         break; 
       }
       default:
         cerr << "FusionEKF::ProcessMeasurement: Invalid Measurment device" << endl;
     }
 
+    ekf_.P_ <<  500, 0, 0, 0,
+                0, 500, 0, 0,
+                0, 0, 500, 0,
+                0, 0, 0, 500;
     // done initializing, no need to predict or update
     is_initialized_ = true;
     return;
@@ -109,19 +100,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    *  Prediction
    ****************************************************************************/
 
-  //Update time, dt_1 expressed in seconds
-  float dt_1 = (measurement_pack.timestamp_ - previous_timestamp_)/1000000.0;
-  previous_timestamp_ = measurement_pack.timestamp_;
-  
-  // If dt_1 is out of bounds, end program
-  if( dt_1 < 0 || dt_1 > MAX_DT )
-  {
-    cerr << "FusionEKF::ProcessMeasurement: Something went wrong... dt = "
-         << dt_1 << endl;
-    exit(1);
-  }
+  // get time step in seconds
+  float dt_1 = get_dt(measurement_pack);
 
-  // Update the state transition matrix F
+  // the state transition matrix F
   ekf_.F_(0,2) = dt_1;
   ekf_.F_(1,3) = dt_1;
 
@@ -145,7 +127,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    *  Update
    ****************************************************************************/
 
-  // Use a switch statement for sensor type
+  // Different update routines based on sensor type
   switch (measurement_pack.sensor_type_)
   {
     case (MeasurementPackage::RADAR):
@@ -165,8 +147,24 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     default:
       cerr << "FusionEKF::ProcessMeasurement: Invalid Measurment device" << endl;
   }
+}
 
-  // print the output
-  // cout << "x_ = " << ekf_.x_ << endl;
-  // cout << "P_ = " << ekf_.P_ << endl;
+/**
+ * Name: get_dt
+ * Return: change in time in seconds
+ * Description: get the time step and check for out of bounds before returning
+**/
+double FusionEKF::get_dt(const MeasurementPackage &measurement_pack){
+  //Update time, dt expressed in seconds
+  float dt = (measurement_pack.timestamp_ - previous_timestamp_)/1000000.0;
+  previous_timestamp_ = measurement_pack.timestamp_;
+  
+  // If dt_1 is out of bounds, end program
+  if( dt <= 0 || dt > MAX_DT )
+  {
+    cerr << "FusionEKF::ProcessMeasurement: Something went wrong... dt = "
+         << dt << endl;
+    exit(1);
+  }
+  return dt;
 }
