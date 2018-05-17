@@ -68,6 +68,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     previous_timestamp_ = measurement_pack.timestamp_;
     
     // Use a switch statement for sensor type switching
+    // the {} in the case statements are strictly necessary, but are a useful reminder
+    // for the future if you want to declare and use variables in them.
     switch (measurement_pack.sensor_type_)
     {
       case (MeasurementPackage::RADAR):
@@ -75,22 +77,27 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
         VectorXd px_py = tools.PolarToCartesian(measurement_pack.raw_measurements_);
         ekf_.x_(0) =  px_py(0);
         ekf_.x_(1) =  px_py(1);
+        ekf_.P_ <<  500,   0,   0,   0,
+                      0, 500,   0,   0,
+                      0,   0, 500,   0,
+                      0,   0,   0, 500;
         break;
       }
       case (MeasurementPackage::LASER):
       {
         ekf_.x_(0) = measurement_pack.raw_measurements_(0);
         ekf_.x_(1) = measurement_pack.raw_measurements_(1);
+        ekf_.P_ <<   1,  0,    0,    0,
+                     0,  1,    0,    0,
+                     0,  0, 1000,    0,
+                     0,  0,    0, 1000;
         break; 
       }
       default:
         cerr << "FusionEKF::ProcessMeasurement: Invalid Measurment device" << endl;
     }
 
-    ekf_.P_ <<  500, 0, 0, 0,
-                0, 500, 0, 0,
-                0, 0, 500, 0,
-                0, 0, 0, 500;
+    
     // done initializing, no need to predict or update
     is_initialized_ = true;
     return;
@@ -139,8 +146,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     }
     case (MeasurementPackage::LASER):
     {
-      ekf_.R_=R_laser_;
-      ekf_.H_=H_laser_;
+      ekf_.R_ = R_laser_;
+      ekf_.H_ = H_laser_;
       ekf_.Update(measurement_pack.raw_measurements_);
       break; 
     }
